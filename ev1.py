@@ -19,7 +19,7 @@ from time import time
 ############## oh shit, is it gonna shit the bed when it tries to add another weight but can't?? fix that for sure
 p1 = Population(agent_class=LunarLanderAgent, N_pop=128, mut_type='change_topo', std=1.0, render_type='gym', dir='misc_runs')
 
-p1.evolve(N_gen=1024, N_episode_steps=500, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True, show_final_runs=False)
+p1.evolve(N_gen=16, N_episode_steps=500, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True, show_final_runs=False)
 
 #p1.population[0].plotNetwork()
 exit(0)
