@@ -4,7 +4,7 @@ from Walker_1D import Walker_1D
 from Population import Population
 import PopTests as pt
 from PuckworldAgent import PuckworldAgent
-from CartpoleAgent import CartpoleAgent
+from CartPoleAgent import CartPoleAgent
 from PendulumAgent import PendulumAgent
 from LunarLanderAgent import LunarLanderAgent
 from time import time
@@ -17,19 +17,19 @@ from time import time
 # add thing to make it plan N runs with the best individ, to show it actually getting better as opposed to just lucky
 ###### Add node legend for plotnetwork!
 ############## oh shit, is it gonna shit the bed when it tries to add another weight but can't?? fix that for sure
-p1 = Population(agent_class=LunarLanderAgent, N_pop=128, mut_type='change_topo', std=1.0, render_type='gym', dir='misc_runs')
+p1 = Population(agent_class=PendulumAgent, N_pop=64, mut_type='change_topo', std=1.0, render_type='gym')
 
-p1.evolve(N_gen=16, N_episode_steps=500, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True, show_final_runs=False)
+p1.evolve(N_gen=1024, N_episode_steps=100, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True, show_final_runs=False)
 
-#p1.population[0].plotNetwork()
 exit(0)
 
 
+
+
+
 e = EPANN(agent_class=LunarLanderAgent, render_type='gym')
-for i in range(10):
-    start = time()
-    e.runEpisode(400, plot_run=False)
-    print('time for ep:', time()-start)
+
+e.runEpisode(400, plot_run=False, record_episode=True)
 
 
 exit(0)

@@ -12,6 +12,7 @@ need to provide:
 --action labels (for each action var)
 --N_state_terms
 --N_actions
+--action_space_type
 
 functions:
 
@@ -23,23 +24,23 @@ functions:
 
 
 
-class LunarLanderAgent:
+class CartPoleAgent:
 
 
     def __init__(self, **kwargs):
 
-        self.env = gym.make('LunarLander-v2')
+        self.env = gym.make('CartPole-v0')
         gym.logger.set_level(40)
-        self.state_labels = ['pos_x', 'pos_y', 'v_x', 'v_y', 'angle', 'v_ang']
-        self.action_labels = ['nothing', 'engine_L', 'engine_main', 'engine_R',]
+        self.state_labels = ['pos_cart', 'v_cart','pole_angle', 'v_poletip']
+        self.action_labels = ['cart_L', 'cart_R',]
         # Last two states are whether the legs are touching the ground or not.
         # I'm not including them here.
-        self.N_state_terms = 6
+        self.N_state_terms = len(self.env.reset())
         self.N_actions = self.env.action_space.n
         self.action_space_type = 'discrete'
         self.state = self.env.reset()
         dt = fst.getDateString()
-        self.base_name = f'LunarLander_{dt}'
+        self.base_name = f'CartPole_{dt}'
         self.run_dir = kwargs.get('run_dir', '/home/declan/Documents/code/evo1/misc_runs/')
         self.monitor_is_on = False
 

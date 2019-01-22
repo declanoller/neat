@@ -7,8 +7,6 @@ import time
 import random
 import networkx as nx
 import pygraphviz as pgv
-#from torch.distributions import Categorical
-#import torch
 
 class EPANN:
 
@@ -18,7 +16,7 @@ class EPANN:
 
         self.render_type = kwargs.get('render_type', 'matplotlib')
         self.verbose = kwargs.get('verbose', False)
-        self.action_space_type = kwargs.get('action_space_type', 'discrete')
+        self.action_space_type = self.agent.action_space_type
         self.N_init_hidden_nodes = kwargs.get('N_init_hidden_nodes', 0)
         self.init_IO_weights = kwargs.get('init_IO_weights', False)
         self.N_inputs = self.agent.N_state_terms
@@ -191,7 +189,13 @@ class EPANN:
 
 
     def mutateAddWeight(self, std=0.1):
+        N_attempts = 4
+        i = 0
         while True:
+            if i>N_attempts:
+                return(0)
+            else:
+                i += 1
             node_1_ind = random.choice(list(range(len(self.node_list))))
 
             # No self
@@ -332,6 +336,8 @@ class EPANN:
 
 
 
+    def setMaxEpisodeSteps(self, N_steps):
+        self.agent.setMaxEpisodeSteps(N_steps)
 
 
     def clearAllNodes(self):
@@ -371,7 +377,8 @@ class EPANN:
             Rs.append(R_tot)
 
             if done:
-                return(R_tot)
+                #return(R_tot)
+                break
 
             if plot_run:
                 if self.render_type == 'matplotlib':
@@ -384,7 +391,7 @@ class EPANN:
 
 
         self.print('R_tot/N_steps = {:.3f}'.format(R_tot/N_steps))
-
+        
         return(R_tot)
 
 

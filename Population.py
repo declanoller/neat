@@ -5,23 +5,32 @@ import FileSystemTools as fst
 from statistics import mean, stdev
 import PopTests as pt
 import numpy as np
+import subprocess
+from math import sqrt, floor
 
 class Population:
 
 
-    def __init__(self, agent_class, **kwargs):
+    def __init__(self, **kwargs):
+
+        self.agent_class = kwargs.get('agent_class', None)
+        assert self.agent_class is not None, 'Need to provide an agent class! exiting'
+
+        self.init_kwargs = kwargs
 
         self.N_pop = kwargs.get('N_pop', 15)
-        self.agent_class = agent_class
         self.mut_type = kwargs.get('mut_type', 'change_topo')
         self.gauss_std = kwargs.get('std', 0.2)
         self.best_N_frac = kwargs.get('best_N_frac', 1/5.0)
 
-        self.fname_notes = kwargs.get('fname_notes', '')
-        self.dir = fst.makeLabelDateDir('evolve_{}_'.format(self.fname_notes), base_dir='misc_runs')
+        self.fname_notes = '{}_{}'.format(kwargs.get('fname_notes', ''), self.agent_class.__name__)
+        self.datetime_str = fst.getDateString()
+        self.base_dir = kwargs.get('base_dir', 'misc_runs')
+        self.dir = fst.combineDirAndFile(self.base_dir, 'evolve_{}_{}'.format(self.datetime_str, self.fname_notes))
+        fst.makeDir(self.dir)
         self.plot_dir = fst.makeDir(fst.combineDirAndFile(self.dir, 'plots'))
         print('run dir: ', self.dir)
-        pop_kwargs = {'agent_class' : self.agent_class, 'run_dir' : self.dir}
+        pop_kwargs = {'run_dir' : self.dir}
         both_kwargs = {**kwargs, **pop_kwargs}
 
         self.population = [EPANN(**both_kwargs) for i in range(self.N_pop)]
@@ -39,8 +48,16 @@ class Population:
         N_trials_per_agent = kwargs.get('N_trials_per_agent', 3)
         N_runs_each_champion = kwargs.get('N_runs_each_champion', 10)
         N_runs_with_best = kwargs.get('N_runs_with_best', 10)
+        assert N_runs_with_best > 0, 'Need at least one run with best individ!'
         record_final_runs = kwargs.get('record_final_runs', False)
         show_final_runs = kwargs.get('show_final_runs', False)
+
+        # Create a log file for the kwargs
+        log_fname = fst.combineDirAndFile(self.dir, f'log_{self.datetime_str}.txt')
+        fst.writeDictToFile({**self.init_kwargs, **kwargs}, log_fname)
+
+        [ind.setMaxEpisodeSteps(N_episode_steps) for ind in self.population]
+
 
         best_FFs = []
         mean_FFs = []
@@ -87,7 +104,7 @@ class Population:
                     print('network sizes: ', [len(x.node_list) for x in self.population])
                     print('avg network size: {:.3f}'.format(sum([len(x.node_list) for x in self.population])/self.N_pop))
                     print('# network connections: ', [len(x.weights_list) for x in self.population])
-                    print('avg # network cennections: {:.3f}'.format(sum([len(x.weights_list) for x in self.population])/self.N_pop))
+                    print('avg # network connections: {:.3f}'.format(sum([len(x.weights_list) for x in self.population])/self.N_pop))
 
             all_FFs.append(mean_Rs_no_label)
             all_nodecounts.append([len(epann.node_list) for epann in self.population])
@@ -123,7 +140,7 @@ class Population:
         plt.xlabel('generations')
         plt.ylabel('FF')
         plt.legend()
-        fname = fst.combineDirAndFile(self.dir, '{}_{}.png'.format('FFplot', fst.getDateString()))
+        fname = fst.combineDirAndFile(self.dir, '{}_{}.png'.format('FFplot', self.datetime_str))
         plt.savefig(fname)
 
         plt.close()
@@ -136,23 +153,40 @@ class Population:
         plt.plot(champ_mean, color='mediumblue')
         plt.xlabel('generations')
         plt.ylabel('FF')
-        fname = fst.combineDirAndFile(self.dir, '{}_{}.png'.format('champion_mean-std_plot', fst.getDateString()))
+        fname = fst.combineDirAndFile(self.dir, '{}_{}.png'.format('champion_mean-std_plot', self.datetime_str))
         plt.savefig(fname)
 
         # Get an avg final score for the best individ.
         best_individ = self.population[0]
-        if record_final_runs:
-            best_individ_scores = [best_individ.runEpisode(N_episode_steps, plot_run=show_final_runs, **kwargs, record_episode=True) for i in range(N_runs_with_best)]
-        else:
-            best_individ_scores = [best_individ.runEpisode(N_episode_steps, plot_run=show_final_runs, **kwargs) for i in range(N_runs_with_best)]
-
+        # Something annoying happening with showing vs recording the final runs, but I'll figure it out later.
+        best_individ_scores = [best_individ.runEpisode(N_episode_steps, plot_run=show_final_runs, record_episode=record_final_runs, **kwargs) for i in range(N_runs_with_best)]
         best_individ_avg_score = mean(best_individ_scores)
 
         # Plot some more stuff with the saved dat
-        pt.plotPopulationProperty(self.dir, 'all_FFs')
-        pt.plotPopulationProperty(self.dir, 'weightcounts')
+        try:
+            pt.plotPopulationProperty(self.dir, 'all_FFs')
+            pt.plotPopulationProperty(self.dir, 'weightcounts')
+        except:
+            print('plotPopulationProperty() failed, continuing')
 
-        return(best_FFs, mean_FFs, best_individ_avg_score)
+
+        try:
+            #if record_final_runs:
+            if False:
+                N_side = min(3, floor(sqrt(N_runs_with_best)))
+                movie_dir = best_individ.agent.record_dir
+                sp_cmd = ['python3', 'movie_combine.py', movie_dir, '--grid_size', f'{N_side}x{N_side}', '--gif']
+                print('calling movie_combine with this command:', sp_cmd)
+                subprocess.check_call(sp_cmd)
+        except:
+            print('failed combining movies into single panel')
+
+        return_dict = {}
+        return_dict['best_FFs'] = best_FFs
+        return_dict['mean_FFs'] = mean_FFs
+        return_dict['best_individ_avg_score'] = best_individ_avg_score
+
+        return(return_dict)
 
 
     def getNextGen(self, FF_list):
@@ -184,7 +218,7 @@ class Population:
 
 
     def saveScore(self, score, label):
-        fname = fst.combineDirAndFile(self.dir, '{}_{}.txt'.format(label, fst.getDateString()))
+        fname = fst.combineDirAndFile(self.dir, '{}_{}.txt'.format(label, self.datetime_str))
         np.savetxt(fname, score, fmt='%.4f')
 
 
