@@ -390,8 +390,11 @@ class EPANN:
                     self.agent.drawState()
 
 
+        if record_episode:
+            print('R_tot = {:.3f}'.format(R_tot))
+
         self.print('R_tot/N_steps = {:.3f}'.format(R_tot/N_steps))
-        
+
         return(R_tot)
 
 
@@ -485,7 +488,7 @@ class EPANN:
         nx.draw_networkx_nodes(DG, nodelist=self.input_node_indices, pos=pos, node_color='mediumseagreen', node_size=600)
         nx.draw_networkx_nodes(DG, nodelist=self.output_node_indices, pos=pos, node_color='orange', node_size=600)
         nx.draw_networkx_nodes(DG, nodelist=[self.bias_node_index], pos=pos, node_color='forestgreen', node_size=600)
-        nx.draw_networkx_nodes(DG, nodelist=other_node_indices, pos=pos, node_color='orange', node_size=600)
+        nx.draw_networkx_nodes(DG, nodelist=other_node_indices, pos=pos, node_color='plum', node_size=600)
 
         for w in self.weights_list:
             weight = self.node_list[w[0]].output_weights[w[1]]
