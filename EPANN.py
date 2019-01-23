@@ -7,14 +7,17 @@ import time
 import random
 import networkx as nx
 import pygraphviz as pgv
+import FileSystemTools as fst
+import json
 
 class EPANN:
 
     def __init__(self, agent_class, **kwargs):
 
         self.agent = agent_class(**kwargs)
+        self.agent_class = agent_class
 
-        self.render_type = kwargs.get('render_type', 'matplotlib')
+        self.render_type = kwargs.get('render_type', 'gym')
         self.verbose = kwargs.get('verbose', False)
         self.action_space_type = self.agent.action_space_type
         self.N_init_hidden_nodes = kwargs.get('N_init_hidden_nodes', 0)
@@ -32,9 +35,11 @@ class EPANN:
         self.propagate_order = []
 
         self.weight_change_chance = 0.98
-        self.weight_add_chance = 0.09
+        #self.weight_add_chance = 0.09
+        self.weight_add_chance = 0.5
         self.weight_remove_chance = 0.05
-        self.node_add_chance = 0.0005
+        self.node_add_chance = 0.8
+        #self.node_add_chance = 0.0005
 
 
 
@@ -53,6 +58,70 @@ class EPANN:
             [[self.addConnectingWeight((i, o), std=1.0) for o in self.output_node_indices] for i in self.input_node_indices]
 
         self.sortPropagateOrder()
+
+
+    def saveNetworkToFile(self, **kwargs):
+
+        default_fname = 'misc_runs/{}_NN_{}.json'.format(self.agent_class.__name__, fst.getDateString())
+
+        fname = kwargs.get('fname', default_fname)
+
+        # For saving the NN to file in a way that it can be read in again.
+        NN_dict = {}
+        NN_dict['N_nodes'] = len(self.node_list)
+        NN_dict['N_input_nodes'] = len(self.input_node_indices)
+        NN_dict['N_output_nodes'] = len(self.output_node_indices)
+        NN_dict['input_nodes'] = self.input_node_indices
+        NN_dict['output_nodes'] = self.output_node_indices
+        NN_dict['bias_node'] = self.bias_node_index
+
+        NN_dict['weights'] = []
+
+        for par_index, child_index in list(self.weights_list):
+            NN_dict['weights'].append({
+            'parent' : par_index,
+            'child' : child_index,
+            'weight' : self.node_list[par_index].output_weights[child_index]
+            })
+
+
+
+        with open(fname, 'w') as outfile:
+            json.dump(NN_dict, outfile, indent=4)
+
+
+    def loadNetworkFromFile(self, fname):
+
+        # This loads a NN from a .json file that was saved with
+        # saveNetworkToFile(). Note that it will overwrite any existing NN
+        # for this object.
+
+        import json
+
+        with open(fname) as json_file:
+            NN_dict = json.load(json_file)
+
+        self.node_list = []
+        self.input_node_indices = []
+        self.output_node_indices = []
+
+        self.N_inputs = NN_dict['N_input_nodes']
+        self.N_total_outputs = NN_dict['N_output_nodes']
+
+        N_other_nodes = NN_dict['N_nodes'] - (1 + self.N_inputs + self.N_total_outputs)
+        print(N_other_nodes)
+        # Add bias node
+        self.addNode(is_bias_node=True)
+
+        # Add input and output nodes
+        [self.addNode(is_input_node=True) for i in range(self.N_inputs)]
+        [self.addNode(is_output_node=True) for i in range(self.N_total_outputs)]
+        [self.addNode() for i in range(N_other_nodes)]
+
+        for weight_dict in NN_dict['weights']:
+            self.addConnectingWeight((weight_dict['parent'], weight_dict['child']), weight_dict['weight'])
+
+        self.plotNetwork(show_plot=True)
 
 
 
@@ -344,19 +413,20 @@ class EPANN:
         [n.clearNode() for i,n in enumerate(self.node_list) if i!=self.bias_node_index]
 
 
-    def runEpisode(self, N_steps, plot_run=False, **kwargs):
+    def runEpisode(self, N_steps, **kwargs):
 
-
-        if plot_run:
-            self.createFig()
 
         R_tot = 0
         Rs = []
 
+        show_episode = kwargs.get('show_episode', False)
         record_episode = kwargs.get('record_episode', False)
 
+        if show_episode:
+            self.createFig()
+
         if record_episode:
-            self.agent.setMonitorOn()
+            self.agent.setMonitorOn(show_run=show_episode)
 
         self.agent.initEpisode()
 
@@ -380,7 +450,7 @@ class EPANN:
                 #return(R_tot)
                 break
 
-            if plot_run:
+            if show_episode or record_episode:
                 if self.render_type == 'matplotlib':
                     self.agent.drawState(self.axes[0])
                     self.axes[1].clear()

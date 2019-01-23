@@ -46,7 +46,7 @@ class Population:
         N_episode_steps = kwargs.get('N_episode_steps', 400)
         N_gen = kwargs.get('N_gen', 50)
         N_trials_per_agent = kwargs.get('N_trials_per_agent', 3)
-        N_runs_each_champion = kwargs.get('N_runs_each_champion', 10)
+        N_runs_each_champion = kwargs.get('N_runs_each_champion', 5)
         N_runs_with_best = kwargs.get('N_runs_with_best', 10)
         assert N_runs_with_best > 0, 'Need at least one run with best individ!'
         record_final_runs = kwargs.get('record_final_runs', False)
@@ -92,6 +92,15 @@ class Population:
 
             mean_Rs_no_label = [x[1] for x in mean_Rs]
 
+            # Run the champion for several times to get stats
+            champion_ind = self.sortByFitnessFunction(mean_Rs)[0][0]
+            champion_scores = []
+            for run in range(N_runs_each_champion):
+                champion_scores.append(self.population[champion_ind].runEpisode(N_episode_steps))
+            champion_FF_mean_std.append([np.mean(champion_scores), np.std(champion_scores)])
+
+
+            # Update with progress
             if i%max(1, int(N_gen/20))==0:
                 print('\ngen {:.1f}. Best FF = {:.4f}, mean FF = {:.4f}'.format(i, best_FF, mean_FF))
                 self.plotPopHist(mean_Rs_no_label, 'pop_FF')
@@ -99,7 +108,7 @@ class Population:
                     self.plotPopHist([len(epann.node_list) for epann in self.population], 'pop_nodecount')
                     self.plotPopHist([len(epann.weights_list) for epann in self.population], 'pop_weightcount')
                     fname = fst.combineDirAndFile(self.plot_dir, '{}_{}.png'.format('bestNN', fst.getDateString()))
-                    self.population[0].plotNetwork(show_plot=False, save_plot=True, fname=fname, node_legend=True)
+                    self.population[champion_ind].plotNetwork(show_plot=False, save_plot=True, fname=fname, node_legend=True)
 
                     print('network sizes: ', [len(x.node_list) for x in self.population])
                     print('avg network size: {:.3f}'.format(sum([len(x.node_list) for x in self.population])/self.N_pop))
@@ -110,19 +119,9 @@ class Population:
             all_nodecounts.append([len(epann.node_list) for epann in self.population])
             all_weightcounts.append([len(epann.weights_list) for epann in self.population])
 
+            # Get the next gen by mutating
             self.getNextGen(mean_Rs)
 
-            champion_scores = []
-            for run in range(N_runs_each_champion):
-                champion_scores.append(self.population[0].runEpisode(N_episode_steps))
-
-            champion_FF_mean_std.append([np.mean(champion_scores), np.std(champion_scores)])
-
-        #except:
-        #    print('Evo. canceled, trying to finish evolve() function.')
-
-        final_sorted = self.sortByFitnessFunction(mean_Rs)
-        print(final_sorted)
 
         print('\n\nRun took: ', fst.getTimeDiffStr(start_time), '\n\n')
 
@@ -149,7 +148,12 @@ class Population:
         champion_FF_mean_std = np.array(champion_FF_mean_std)
         champ_mean = champion_FF_mean_std[:,0]
         champ_std = champion_FF_mean_std[:,1]
-        plt.fill_between(np.array(range(len(champ_mean))), champ_mean - champ_std, champ_mean + champ_std, facecolor='dodgerblue', alpha=0.5)
+        plt.fill_between(
+        np.array(range(len(champ_mean))),
+        champ_mean - champ_std,
+        champ_mean + champ_std,
+        facecolor='dodgerblue', alpha=0.5)
+
         plt.plot(champ_mean, color='mediumblue')
         plt.xlabel('generations')
         plt.ylabel('FF')
@@ -158,8 +162,18 @@ class Population:
 
         # Get an avg final score for the best individ.
         best_individ = self.population[0]
+
+        # Save the NN of the best individ.
+        bestNN_fname = fst.combineDirAndFile(self.dir, f'bestNN_{self.agent_class.__name__}_{self.datetime_str}')
+        best_individ.saveNetworkToFile(fname=(bestNN_fname + '.json'))
+        best_individ.plotNetwork(show_plot=False, save_plot=True, fname=(bestNN_fname + '.png'), node_legend=True)
+
         # Something annoying happening with showing vs recording the final runs, but I'll figure it out later.
-        best_individ_scores = [best_individ.runEpisode(N_episode_steps, plot_run=show_final_runs, record_episode=record_final_runs, **kwargs) for i in range(N_runs_with_best)]
+        best_individ_scores = [best_individ.runEpisode(N_episode_steps,
+        show_episode=show_final_runs,
+        record_episode=record_final_runs,
+        **kwargs) for i in range(N_runs_with_best)]
+
         best_individ_avg_score = mean(best_individ_scores)
 
         # Plot some more stuff with the saved dat
@@ -191,21 +205,28 @@ class Population:
 
     def getNextGen(self, FF_list):
 
+        '''
+        This first sorts the pop by the (index, FF) list passed to it.
+        Then it takes the best_N of these indices in order. It starts the
+        new_pop with a clones of the best individ from the last gen. Then it adds
+        to new_pop by mutating the best_N until the pop is filled again.
+
+        So, you can assume that for the new pop., pop[0] is the best one of the
+        LAST generation.
+
+        '''
+
         pop_indices_sorted = self.sortByFitnessFunction(FF_list)
         best_N = max(int(self.N_pop*self.best_N_frac), 2)
         #best_N = 1
-        top_N_indices = [x[0] for x in pop_indices_sorted[:best_N]]
-        #print('best individ:')
-        #self.population[top_N_indices[0]].printNetwork()
+        best_N_indices = [x[0] for x in pop_indices_sorted[:best_N]]
 
-
-
-        new_pop = [self.population[top_N_indices[0]].clone()]
+        new_pop = [self.population[best_N_indices[0]].clone()]
         mod_counter = 0
 
         while len(new_pop)<self.N_pop:
 
-            new_EPANN = self.population[top_N_indices[mod_counter%best_N]].clone()
+            new_EPANN = self.population[best_N_indices[mod_counter%best_N]].clone()
             if self.mut_type == 'change_topo':
                 new_EPANN.mutate(std=self.gauss_std)
             if self.mut_type == 'gauss_noise':
@@ -223,9 +244,8 @@ class Population:
 
 
     def sortByFitnessFunction(self, FF_list):
-
-        # Assumes self.pop is in the same order it was when it was evaluated.
-
+        # Should be a list of tuples of (population index, FF)
+        # Sorts from best to worst FF.
         pop_indices_sorted = sorted(FF_list, key=lambda x: -x[1])
         return(pop_indices_sorted)
 

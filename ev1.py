@@ -3,6 +3,7 @@ from Node import Node
 from Walker_1D import Walker_1D
 from Population import Population
 import PopTests as pt
+import RunTools as rt
 from PuckworldAgent import PuckworldAgent
 from CartPoleAgent import CartPoleAgent
 from PendulumAgent import PendulumAgent
@@ -11,15 +12,43 @@ from time import time
 
 
 
+brach_params = {
+'individ_class' : Brachistochrone,
+'N' : 5,
+'height' : 1.3,
+'init_T_factor' : 0.00001,
+'mutate_strength_height_frac' : [0.05, 0.5],
+'N_gen' : 20,
+'make_gif' : False,
+'show_plot' : False,
+'N_runs' : 2,
+'save_FF' : True
+}
 
 
 
-# add thing to make it plan N runs with the best individ, to show it actually getting better as opposed to just lucky
-###### Add node legend for plotnetwork!
-############## oh shit, is it gonna shit the bed when it tries to add another weight but can't?? fix that for sure
-p1 = Population(agent_class=PendulumAgent, N_pop=64, mut_type='change_topo', std=1.0, render_type='gym')
+rt.varyParam(object_class=Population, run_fn=Population.evolve, run_result_var='best_FF', **brach_params)
 
-p1.evolve(N_gen=1024, N_episode_steps=100, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True, show_final_runs=False)
+
+
+exit()
+
+
+p1 = Population(agent_class=PendulumAgent, N_pop=4, mut_type='change_topo', std=1.0, render_type='gym')
+
+p1.evolve(N_gen=8, N_episode_steps=100, N_trials_per_agent=1, N_runs_with_best=1, record_final_runs=False, show_final_runs=False)
+
+exit(0)
+
+
+
+
+e = EPANN(agent_class=PendulumAgent)
+
+e.loadNetworkFromFile(
+'/home/declan/Documents/code/evo1/misc_runs/evolve_22-01-2019_18-01-04__PendulumAgent' +
+'/' + 'bestNN_PendulumAgent_22-01-2019_18-01-04' + '.json'
+)
 
 exit(0)
 
@@ -27,12 +56,8 @@ exit(0)
 
 
 
-e = EPANN(agent_class=LunarLanderAgent, render_type='gym')
-
-e.runEpisode(400, plot_run=False, record_episode=True)
 
 
-exit(0)
 
 e = EPANN(agent_class=LunarLanderAgent, render_type='gym', N_init_hidden_nodes=0, init_IO_weights=False, verbose=True)
 

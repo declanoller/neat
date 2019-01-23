@@ -58,7 +58,7 @@ class PendulumAgent:
         self.env.close()
 
 
-    def setMonitorOn(self):
+    def setMonitorOn(self, show_run=True):
         # It seems like when I call this, it gives a warning about the env not being
         # made with gym.make (which it is...), but if I call it only once for the same
         # agent, it doesn't run it every time I call it?
@@ -68,7 +68,10 @@ class PendulumAgent:
         # See https://github.com/openai/gym/issues/347 maybe?
         if True:
             self.record_dir = fst.combineDirAndFile(self.run_dir, self.base_name)
-            self.env = wrappers.Monitor(self.env, self.record_dir)
+            if show_run:
+                self.env = wrappers.Monitor(self.env, self.record_dir)
+            else:
+                self.env = wrappers.Monitor(self.env, self.record_dir, video_callable=False, force=True)
             self.monitor_is_on = True
 
 
