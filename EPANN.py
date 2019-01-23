@@ -34,11 +34,10 @@ class EPANN:
         self.weights_list = set() # This will be a set of tuples of the form (parent index, child index)
         self.propagate_order = []
 
-        self.weight_change_chance = 0.98
-        self.weight_add_chance = 0.09
-        self.weight_remove_chance = 0.05
-        self.node_add_chance = 0.001
-        #self.node_add_chance = 0.0005
+        self.weight_change_chance = kwargs.get('weight_change_chance', 0.98)
+        self.weight_add_chance = kwargs.get('weight_add_chance', 0.09)
+        self.weight_remove_chance = kwargs.get('weight_remove_chance', 0.05)
+        self.node_add_chance = kwargs.get('node_add_chance', 0.0005)
 
 
 
@@ -246,7 +245,7 @@ class EPANN:
         except:
             print('error in sortPropagateOrder()! Saving NN to file')
             self.saveNetworkToFile()
-            self.plotNetwork(save_plot=True, fname=(bestNN_fname + '.png'), node_legend=True)
+            self.plotNetwork(save_plot=True, node_legend=True)
         # Now it should be in order, where you can evaluate each node, starting with the input ones,
         # and all the inputs should arrive in the right order.
         self.propagate_order.reverse()
@@ -557,7 +556,7 @@ class EPANN:
 
         #nx.draw(DG, with_labels=True, font_weight='bold', arrowsize=20)
         pos = nx.drawing.nx_agraph.graphviz_layout(DG, prog='dot')
-        nx.draw_networkx_nodes(DG, nodelist=self.input_node_indices, pos=pos, node_color='mediumseagreen', node_size=600)
+        nx.draw_networkx_nodes(DG, nodelist=self.input_node_indices, pos=pos, node_color='lightgreen', node_size=600)
         nx.draw_networkx_nodes(DG, nodelist=self.output_node_indices, pos=pos, node_color='orange', node_size=600)
         nx.draw_networkx_nodes(DG, nodelist=[self.bias_node_index], pos=pos, node_color='forestgreen', node_size=600)
         nx.draw_networkx_nodes(DG, nodelist=other_node_indices, pos=pos, node_color='plum', node_size=600)

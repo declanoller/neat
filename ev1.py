@@ -5,9 +5,9 @@ from GymAgent import GymAgent
 
 
 
-p1 = Population(agent_class=GymAgent, env_name='LunarLander', N_pop=4, mut_type='change_topo', std=1.0, render_type='gym')
+p1 = Population(agent_class=GymAgent, env_name='Pendulum', N_pop=64, mut_type='change_topo', std=0.1, render_type='gym')
 
-p1.evolve(N_gen=4, N_episode_steps=100, N_trials_per_agent=1, N_runs_with_best=3, record_final_runs=True, show_final_runs=False)
+p1.evolve(N_gen=1024, N_episode_steps=100, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True)
 
 exit(0)
 
