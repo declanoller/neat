@@ -7,6 +7,7 @@ import PopTests as pt
 import numpy as np
 import subprocess
 from math import sqrt, floor
+import movie_combine
 
 class Population:
 
@@ -185,13 +186,10 @@ class Population:
 
 
         try:
-            #if record_final_runs:
-            if False:
+            if record_final_runs:
                 N_side = min(3, floor(sqrt(N_runs_with_best)))
                 movie_dir = best_individ.agent.record_dir
-                sp_cmd = ['python3', 'movie_combine.py', movie_dir, '--grid_size', f'{N_side}x{N_side}', '--gif']
-                print('calling movie_combine with this command:', sp_cmd)
-                subprocess.check_call(sp_cmd)
+                movie_combine.combineMovieFiles(path=movie_dir, grid_size=f'{N_side}x{N_side}, make_gif=True)
         except:
             print('failed combining movies into single panel')
 
