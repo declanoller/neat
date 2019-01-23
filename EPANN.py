@@ -146,7 +146,8 @@ class EPANN:
 
     def addConnectingWeight(self, weight_parchild_tuple, val=None, std=0.1):
 
-        # You shouldn't be calling this unless you already know it doesn't have that connection.
+        # You shouldn't be calling this unless you already know it doesn't have that connection
+        # AND that that connection is valid (not leading from child to parent).
         assert weight_parchild_tuple not in self.weights_list, 'Problem in addConnectingWeight!'
 
         parent_node_index, child_node_index = weight_parchild_tuple
@@ -245,7 +246,7 @@ class EPANN:
         except:
             print('error in sortPropagateOrder()! Saving NN to file')
             self.saveNetworkToFile()
-            self.plotNetwork(save_plot=True, node_legend=True)
+            self.plotNetwork(show_plot=False, save_plot=True, node_legend=True)
         # Now it should be in order, where you can evaluate each node, starting with the input ones,
         # and all the inputs should arrive in the right order.
         self.propagate_order.reverse()
@@ -312,6 +313,7 @@ class EPANN:
             self.print('changing weight between {} and {}'.format(par_index, child_index))
             self.node_list[par_index].mutateOutputWeight(child_index, std=std)
 
+
     def mutateRemoveWeight(self):
         if len(self.weights_list)>0:
             par_index, child_index = random.choice(list(self.weights_list))
@@ -349,6 +351,28 @@ class EPANN:
         if self.verbose:
             self.printNetwork()
 
+
+
+
+    def getsInputFrom(self, n1_index, n2_index):
+
+        # This is to check if n1 gets input from n2, indirectly.
+
+        n1 = self.node_list[n1_index]
+        n2 = self.node_list[n2_index]
+        lineage_q = Queue()
+        # You need this! Or it won't check its own parents!
+        lineage_q.put(n1_index)
+        [lineage_q.put(n) for n in n1.input_indices]
+
+        while lineage_q.qsize() > 0:
+            next = lineage_q.get()
+            if n2_index in self.node_list[next].input_indices:
+                return(True)
+            else:
+                [lineage_q.put(n) for n in self.node_list[next].input_indices]
+
+        return(False)
 
 
 
@@ -476,26 +500,6 @@ class EPANN:
         for n in self.node_list:
             for w in n.getOutputIndices():
                 n.output_weights[w] += np.random.normal(scale=std)
-
-
-
-    def getsInputFrom(self, n1_index, n2_index):
-
-        # This is to check if n1 gets input from n2, indirectly.
-
-        n1 = self.node_list[n1_index]
-        n2 = self.node_list[n2_index]
-        lineage_q = Queue()
-        [lineage_q.put(n) for n in n1.input_indices]
-
-        while lineage_q.qsize() > 0:
-            next = lineage_q.get()
-            if n2_index in self.node_list[next].input_indices:
-                return(True)
-            else:
-                [lineage_q.put(n) for n in self.node_list[next].input_indices]
-
-        return(False)
 
 
 
