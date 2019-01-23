@@ -23,7 +23,7 @@ class Population:
         self.gauss_std = kwargs.get('std', 0.2)
         self.best_N_frac = kwargs.get('best_N_frac', 1/5.0)
 
-        self.fname_notes = '{}_{}'.format(kwargs.get('fname_notes', ''), self.agent_class.__name__)
+        self.fname_notes = '{}_{}{}'.format(kwargs.get('fname_notes', ''), self.agent_class.__name__, kwargs.get('env_name', ''))
         self.datetime_str = fst.getDateString()
         self.base_dir = kwargs.get('base_dir', 'misc_runs')
         self.dir = fst.combineDirAndFile(self.base_dir, 'evolve_{}_{}'.format(self.datetime_str, self.fname_notes))

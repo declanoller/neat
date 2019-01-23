@@ -95,8 +95,6 @@ class EPANN:
         # saveNetworkToFile(). Note that it will overwrite any existing NN
         # for this object.
 
-        import json
-
         with open(fname) as json_file:
             NN_dict = json.load(json_file)
 
