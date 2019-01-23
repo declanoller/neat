@@ -35,10 +35,9 @@ class EPANN:
         self.propagate_order = []
 
         self.weight_change_chance = 0.98
-        #self.weight_add_chance = 0.09
-        self.weight_add_chance = 0.5
+        self.weight_add_chance = 0.09
         self.weight_remove_chance = 0.05
-        self.node_add_chance = 0.8
+        self.node_add_chance = 0.001
         #self.node_add_chance = 0.0005
 
 
@@ -205,46 +204,51 @@ class EPANN:
             sort_queue.put(ind)
             queue_set.add(ind)
 
-        while not sort_queue.empty():
+        try:
 
-            ind = sort_queue.get()
-            queue_set.remove(ind)
-            # Make sure all the children of this node are already in the list/set. If
-            # one isn't, add this child to the queue if it's not already there,
-            # (this is in case there's a "dead end" node that would never get seen by
-            # tracing back from the outputs), put the node back in the queue, and continue
-            # to the next loop iteration.
-            #
-            # You could also have it not break immediately, and add all its unseen children,
-            # which might speed it up, but might also not.
-            all_children_in_prop_order = True
+            while not sort_queue.empty():
 
-            for child_ind in self.node_list[ind].getOutputIndices():
-                if child_ind not in prop_order_set:
-                    all_children_in_prop_order = False
-                    # Only want to add the child to the queue if it isn't already in it
-                    if child_ind not in queue_set:
-                        sort_queue.put(child_ind)
-                        queue_set.add(child_ind)
+                ind = sort_queue.get()
+                queue_set.remove(ind)
+                # Make sure all the children of this node are already in the list/set. If
+                # one isn't, add this child to the queue if it's not already there,
+                # (this is in case there's a "dead end" node that would never get seen by
+                # tracing back from the outputs), put the node back in the queue, and continue
+                # to the next loop iteration.
+                #
+                # You could also have it not break immediately, and add all its unseen children,
+                # which might speed it up, but might also not.
+                all_children_in_prop_order = True
 
-                    break
+                for child_ind in self.node_list[ind].getOutputIndices():
+                    if child_ind not in prop_order_set:
+                        all_children_in_prop_order = False
+                        # Only want to add the child to the queue if it isn't already in it
+                        if child_ind not in queue_set:
+                            sort_queue.put(child_ind)
+                            queue_set.add(child_ind)
 
-            if all_children_in_prop_order:
-                # This means that the node can now be added to the prop_order and set,
-                # and also add its parents to the queue if they're not already.
-                self.propagate_order.append(ind)
-                prop_order_set.add(ind)
+                        break
 
-                for parent_ind in self.node_list[ind].input_indices:
-                    if parent_ind not in queue_set:
-                        sort_queue.put(parent_ind)
-                        queue_set.add(parent_ind)
+                if all_children_in_prop_order:
+                    # This means that the node can now be added to the prop_order and set,
+                    # and also add its parents to the queue if they're not already.
+                    self.propagate_order.append(ind)
+                    prop_order_set.add(ind)
 
-            else:
-                # If the children aren't all there already, put it back in the queue.
-                sort_queue.put(ind)
-                queue_set.add(ind)
+                    for parent_ind in self.node_list[ind].input_indices:
+                        if parent_ind not in queue_set:
+                            sort_queue.put(parent_ind)
+                            queue_set.add(parent_ind)
 
+                else:
+                    # If the children aren't all there already, put it back in the queue.
+                    sort_queue.put(ind)
+                    queue_set.add(ind)
+        except:
+            print('error in sortPropagateOrder()! Saving NN to file')
+            self.saveNetworkToFile()
+            self.plotNetwork(save_plot=True, fname=(bestNN_fname + '.png'), node_legend=True)
         # Now it should be in order, where you can evaluate each node, starting with the input ones,
         # and all the inputs should arrive in the right order.
         self.propagate_order.reverse()
@@ -599,7 +603,8 @@ class EPANN:
             if fname is not None:
                 plt.savefig(fname)
             else:
-                plt.savefig(fst.getDateString() + '_NNplot.png')
+                default_fname = 'misc_runs/{}_NN_{}.png'.format(self.agent_class.__name__, fst.getDateString())
+                plt.savefig(default_fname)
 
         if show_plot:
             plt.show()

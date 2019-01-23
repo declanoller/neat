@@ -45,6 +45,11 @@ class CartPoleAgent:
         self.monitor_is_on = False
 
 
+    def setMaxEpisodeSteps(self, N_steps):
+
+        self.env._max_episode_steps = N_steps
+        self.env.spec.max_episode_steps = N_steps
+        self.env.spec.timestep_limit = N_steps
 
 
     def setMonitorOn(self):
