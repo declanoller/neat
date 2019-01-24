@@ -2,12 +2,12 @@ from EPANN import EPANN
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import FileSystemTools as fst
-from statistics import mean, stdev
-import PopTests as pt
+import RunTools as rt
 import numpy as np
 import subprocess
 from math import sqrt, floor
 import movie_combine
+import traceback as tb
 
 class Population:
 
@@ -161,7 +161,8 @@ class Population:
         fname = fst.combineDirAndFile(self.dir, '{}_{}.png'.format('champion_mean-std_plot', self.datetime_str))
         plt.savefig(fname)
 
-        # Get an avg final score for the best individ.
+        # Get an avg final score for the best individ. You know this will be the best one because
+        # the best one is preserved after getNextGen().
         best_individ = self.population[0]
 
         # Save the NN of the best individ.
@@ -175,22 +176,27 @@ class Population:
         record_episode=record_final_runs,
         **kwargs) for i in range(N_runs_with_best)]
 
-        best_individ_avg_score = mean(best_individ_scores)
+        best_individ_avg_score = np.mean(best_individ_scores)
 
         # Plot some more stuff with the saved dat
         try:
-            pt.plotPopulationProperty(self.dir, 'all_FFs')
-            pt.plotPopulationProperty(self.dir, 'weightcounts')
+            rt.plotPopulationProperty(self.dir, 'all_FFs', make_hist_gif=False)
+            rt.plotPopulationProperty(self.dir, 'weightcounts', make_hist_gif=False)
         except:
+            print('\n\n')
+            print(tb.format_exc())
             print('plotPopulationProperty() failed, continuing')
+
 
 
         try:
             if record_final_runs:
                 N_side = min(3, floor(sqrt(N_runs_with_best)))
                 movie_dir = best_individ.agent.record_dir
-                movie_combine.combineMovieFiles(path=movie_dir, grid_size=f'{N_side}x{N_side}, make_gif=True)
+                movie_combine.combineMovieFiles(path=movie_dir, grid_size=f'{N_side}x{N_side}', make_gif=True)
         except:
+            print('\n\n')
+            print(tb.format_exc())
             print('failed combining movies into single panel')
 
         return_dict = {}
