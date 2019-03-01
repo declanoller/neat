@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./classes')
 import numpy as np
 from math import exp, tanh
 from copy import copy

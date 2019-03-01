@@ -1,4 +1,5 @@
-
+import sys
+sys.path.append('./classes')
 from moviepy.editor import VideoFileClip, clips_array, vfx
 import argparse
 import FileSystemTools as fst

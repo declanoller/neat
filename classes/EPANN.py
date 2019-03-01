@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./classes')
 import numpy as np
 from queue import Queue
 from Node import Node
@@ -32,6 +34,7 @@ class EPANN:
 
         self.node_list = []
         self.weights_list = set() # This will be a set of tuples of the form (parent index, child index)
+        self.weights_dict = {}
         self.propagate_order = []
 
         self.weight_change_chance = kwargs.get('weight_change_chance', 0.98)
@@ -105,7 +108,6 @@ class EPANN:
         self.N_total_outputs = NN_dict['N_output_nodes']
 
         N_other_nodes = NN_dict['N_nodes'] - (1 + self.N_inputs + self.N_total_outputs)
-        print(N_other_nodes)
         # Add bias node
         self.addNode(is_bias_node=True)
 
@@ -117,7 +119,8 @@ class EPANN:
         for weight_dict in NN_dict['weights']:
             self.addConnectingWeight((weight_dict['parent'], weight_dict['child']), weight_dict['weight'])
 
-        self.plotNetwork(show_plot=True)
+        #self.plotNetwork(show_plot=True)
+        pass
 
 
 
@@ -154,6 +157,7 @@ class EPANN:
         self.node_list[child_node_index].addToInputIndices(parent_node_index)
         self.node_list[parent_node_index].addToOutputWeights(child_node_index, val=val, std=std)
         self.weights_list.add(weight_parchild_tuple)
+        self.weights_dict[weight_parchild_tuple] = self.node_list[parent_node_index].output_weights[child_node_index]
         self.sortPropagateOrder()
 
 
@@ -166,6 +170,7 @@ class EPANN:
         self.node_list[child_node_index].removeFromInputIndices(parent_node_index)
         self.node_list[parent_node_index].removeFromOutputWeights(child_node_index)
         self.weights_list.remove(weight_parchild_tuple)
+        self.weights_dict.pop(weight_parchild_tuple)
         self.sortPropagateOrder()
 
 
@@ -546,24 +551,34 @@ class EPANN:
 
         other_node_indices = [i for i,n in enumerate(self.node_list) if ((i not in self.input_node_indices) and (i not in self.output_node_indices) and (i != self.bias_node_index))]
 
+        DG.add_node(self.bias_node_index)
+
         for i in self.input_node_indices:
             DG.add_node(i)
 
         for i in self.output_node_indices:
             DG.add_node(i)
 
-        DG.add_node(self.bias_node_index)
+        # I think you have to add this, because if you have a node that doesn't have any connections
+        # and it's not I/O/B, then it will never get entered into DG without this.
+        for i in other_node_indices:
+            DG.add_node(i)
 
         for n in self.node_list:
             for o in n.getOutputIndices():
                 DG.add_edges_from([(n.node_index, o)])
 
-        #nx.draw(DG, with_labels=True, font_weight='bold', arrowsize=20)
         pos = nx.drawing.nx_agraph.graphviz_layout(DG, prog='dot')
-        nx.draw_networkx_nodes(DG, nodelist=self.input_node_indices, pos=pos, node_color='lightgreen', node_size=600)
-        nx.draw_networkx_nodes(DG, nodelist=self.output_node_indices, pos=pos, node_color='orange', node_size=600)
-        nx.draw_networkx_nodes(DG, nodelist=[self.bias_node_index], pos=pos, node_color='forestgreen', node_size=600)
-        nx.draw_networkx_nodes(DG, nodelist=other_node_indices, pos=pos, node_color='plum', node_size=600)
+
+        try:
+            nx.draw_networkx_nodes(DG, nodelist=self.input_node_indices, pos=pos, node_color='lightgreen', node_size=600)
+            nx.draw_networkx_nodes(DG, nodelist=self.output_node_indices, pos=pos, node_color='orange', node_size=600)
+            nx.draw_networkx_nodes(DG, nodelist=[self.bias_node_index], pos=pos, node_color='forestgreen', node_size=600)
+            nx.draw_networkx_nodes(DG, nodelist=other_node_indices, pos=pos, node_color='plum', node_size=600)
+        except:
+            print('problem drawing nx nodes. pos:')
+            print(pos)
+            exit()
 
         for w in self.weights_list:
             weight = self.node_list[w[0]].output_weights[w[1]]

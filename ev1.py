@@ -1,21 +1,69 @@
+import sys
+sys.path.append('./classes')
 from EPANN import EPANN
 from Population import Population
 import RunTools as rt
 from GymAgent import GymAgent
+from time import time
+import numpy as np
+
+ea = EPANN(agent_class=GymAgent, env_name='CartPole')
+
+#ea.plotNetwork()
+
+ea.addConnectingWeight((0,4))
+ea.addConnectingWeight((1,4))
+ea.addNodeInBetween(1,4)
+
+ea.addConnectingWeight((2,5))
+ea.addNode()
+ea.addConnectingWeight((2,6))
+ea.addConnectingWeight((3,4))
+ea.addConnectingWeight((3,5))
+ea.addConnectingWeight((6,5))
+#ea.addAtomInBetween((2,5))
+
+
+N_tests = 100000
+
+inputs = np.random.random((N_tests, 4))
+
+st = time()
+for i in range(N_tests):
+
+    ea.forwardPass(inputs[i])
+
+
+print('time elapsed:', time() - st)
+
+#ea.plotNetwork()
+
+
+
+
+exit()
+
+
+p1 = Population(agent_class=GymAgent, env_name='CartPole', N_pop=64, mut_type='change_topo', std=1.0, render_type='gym')
+
+p1.evolve(N_gen=128, N_episode_steps=200, N_trials_per_agent=2, N_runs_with_best=2, record_final_runs=False, show_final_runs=False)
+
+exit(0)
+
+
 
 
 evolve_params = {
 'N_runs' : 3,
 'agent_class' : GymAgent,
-'env_name' : 'CartPole',
-'N_pop' : 4,
+'env_name' : 'LunarLander',
+'N_pop' : 64,
 'mut_type' : 'change_topo',
-'std' : 1.0,
-'N_gen' : [4, 8],
-'N_episode_steps' : 100,
-'N_trials_per_agent' : 1,
-'N_runs_with_best' : 1,
-'record_final_runs' : False,
+'std' : [0.01, 0.1, 1, 10],
+'N_gen' : 256,
+'N_trials_per_agent' : 2,
+'N_runs_with_best' : 9,
+'record_final_runs' : True,
 'show_final_runs' : False
 }
 
@@ -27,12 +75,19 @@ exit()
 
 
 
-p1 = Population(agent_class=GymAgent, env_name='Pendulum', N_pop=64, mut_type='change_topo', std=1.0, render_type='gym')
-
-p1.evolve(N_gen=2048, N_episode_steps=100, N_trials_per_agent=2, N_runs_with_best=9, record_final_runs=True)
-
-exit(0)
-
+evolve_params = {
+'N_runs' : 3,
+'agent_class' : GymAgent,
+'env_name' : 'LunarLander',
+'N_pop' : 64,
+'mut_type' : 'change_topo',
+'std' : [0.01, 0.1, 1.0, 10.0],
+'N_gen' : 256,
+'N_trials_per_agent' : 2,
+'N_runs_with_best' : 9,
+'record_final_runs' : True,
+'show_final_runs' : False
+}
 
 
 

@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./classes')
 from EPANN import EPANN
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -57,8 +59,6 @@ class Population:
         log_fname = fst.combineDirAndFile(self.dir, f'log_{self.datetime_str}.txt')
         fst.writeDictToFile({**self.init_kwargs, **kwargs}, log_fname)
 
-        [ind.setMaxEpisodeSteps(N_episode_steps) for ind in self.population]
-
 
         best_FFs = []
         mean_FFs = []
@@ -108,12 +108,12 @@ class Population:
                 if self.mut_type == 'change_topo':
                     self.plotPopHist([len(epann.node_list) for epann in self.population], 'pop_nodecount')
                     self.plotPopHist([len(epann.weights_list) for epann in self.population], 'pop_weightcount')
-                    fname = fst.combineDirAndFile(self.plot_dir, '{}_{}.png'.format('bestNN', fst.getDateString()))
+                    fname = fst.combineDirAndFile(self.plot_dir, '{}_gen{}_{}.png'.format('bestNN', i, fst.getDateString()))
                     self.population[champion_ind].plotNetwork(show_plot=False, save_plot=True, fname=fname, node_legend=True)
 
-                    print('network sizes: ', [len(x.node_list) for x in self.population])
+                    #print('network sizes: ', [len(x.node_list) for x in self.population])
                     print('avg network size: {:.3f}'.format(sum([len(x.node_list) for x in self.population])/self.N_pop))
-                    print('# network connections: ', [len(x.weights_list) for x in self.population])
+                    #print('# network connections: ', [len(x.weights_list) for x in self.population])
                     print('avg # network connections: {:.3f}'.format(sum([len(x.weights_list) for x in self.population])/self.N_pop))
 
             all_FFs.append(mean_Rs_no_label)
@@ -175,7 +175,7 @@ class Population:
         show_episode=show_final_runs,
         record_episode=record_final_runs,
         **kwargs) for i in range(N_runs_with_best)]
-
+        #best_individ.agent.closeEnv()
         best_individ_avg_score = np.mean(best_individ_scores)
 
         # Plot some more stuff with the saved dat

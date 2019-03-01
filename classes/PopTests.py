@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./classes')
 import Population
 import matplotlib.pyplot as plt
 from statistics import mean,stdev

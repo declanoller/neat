@@ -9,7 +9,8 @@
         "action_labels": [
             "torque"
         ],
-        "action_space_type": "continuous"
+        "action_space_type": "continuous",
+        "max_episode_steps": 200
     },
     "LunarLander": {
         "gym_env_name": "LunarLander-v2",
@@ -27,7 +28,8 @@
             "engine_main",
             "engine_R"
         ],
-        "action_space_type": "discrete"
+        "action_space_type": "discrete",
+        "max_episode_steps": 500
     },
     "CartPole": {
         "gym_env_name": "CartPole-v0",
@@ -41,6 +43,7 @@
             "cart_L",
             "cart_R"
         ],
-        "action_space_type": "discrete"
+        "action_space_type": "discrete",
+        "max_episode_steps": 200
     }
 }

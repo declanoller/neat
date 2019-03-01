@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./classes')
 import numpy as np
 import gym
 from gym import wrappers
@@ -45,9 +47,9 @@ class GymAgent:
 
         # Load all the properties for this env.
         self.loadEnvJson(self.env_name)
-
         # Create the env
         self.env = gym.make(self.gym_env_name)
+        self.setMaxEpisodeSteps(self.max_episode_steps)
         gym.logger.set_level(40)
 
         self.state = self.env.reset() # Should I be doing this here? sometimes trouble with resetting when done=False
@@ -67,6 +69,7 @@ class GymAgent:
     def closeEnv(self):
         # This doesn't seem to be a good idea to use with monitor?
         self.env.close()
+        #self.env.render(close=True)
 
 
     def setMonitorOn(self, show_run=True):
@@ -119,6 +122,7 @@ class GymAgent:
         self.state_labels = env_info['state_labels']
         self.action_labels = env_info['action_labels']
         self.action_space_type = env_info['action_space_type']
+        self.max_episode_steps = env_info['max_episode_steps']
         self.N_state_terms = len(self.state_labels)
         self.N_actions = len(self.action_labels)
 
