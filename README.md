@@ -2,6 +2,10 @@
 Experiments with playing OpenAI games with NEAT
 ==========================================
 
+<p align="center">
+  <img width="1170" height="536" src="misc/cover_img_neat.png">
+</p>
+
 Overview
 --------------------------------
 

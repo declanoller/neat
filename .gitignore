@@ -1,2 +1,6 @@
 misc_runs/
 save_runs/
+scrap_old_test*
+misc_runs*
+save_runs*
+
