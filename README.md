@@ -9,7 +9,7 @@ Experiments with playing OpenAI games with NEAT
 Overview
 --------------------------------
 
-This project uses Kenneth Stanley's popular NEAT framework (https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_topologies) to evolve neural networks to play OpenAI gym games. `Node` objects are the basic unit of `EPANN` objects, a collection of which forms the `Population` object. Tests to compare different population parameters can be done with `PopTests.py`.
+This project uses Kenneth Stanley's popular [NEAT framework](https://en.wikipedia.org/wiki/Neuroevolution_of_augmenting_topologies) to evolve neural networks to play OpenAI gym games. `Node` objects are the basic unit of `EPANN` objects, a collection of which forms the `Population` object. Tests to compare different population parameters can be done with `PopTests.py`.
 
 
 Main scripts
